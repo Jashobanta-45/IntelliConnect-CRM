@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-crm",
+      "description": "A modern CRM dashboard interface shown on a laptop screen.",
+      "imageUrl": "https://picsum.photos/seed/crm-hero/700/500",
+      "imageHint": "CRM dashboard"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Avatar for a user named Admin.",
+      "imageUrl": "https://picsum.photos/seed/user-avatar-1/40/40",
+      "imageHint": "professional person"
+    }
+  ]
 }

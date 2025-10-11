@@ -1,3 +1,70 @@
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+
 export default function Home() {
-  return <></>;
+  const heroImage = PlaceHolderImages.find(image => image.id === "hero-crm");
+  return (
+    <div className="flex flex-col min-h-screen">
+      <header className="container z-40 bg-background">
+        <div className="flex h-20 items-center justify-between py-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Icons.logo className="h-8 w-8 text-primary" />
+            <span className="font-bold font-headline text-xl">IntelliConnect CRM</span>
+          </Link>
+          <nav>
+            <Button asChild>
+              <Link href="/dashboard">
+                Go to Dashboard
+              </Link>
+            </Button>
+          </nav>
+        </div>
+      </header>
+      <main className="flex-1">
+        <section className="container grid lg:grid-cols-2 place-items-center py-20 md:py-32 gap-10">
+          <div className="text-center lg:text-start space-y-6">
+            <main className="text-5xl md:text-6xl font-bold font-headline">
+              <h1 className="inline">
+                <span className="inline bg-gradient-to-r from-[#42A5F5] to-[#26A69A] text-transparent bg-clip-text">
+                  IntelliConnect
+                </span>{" "}
+                CRM
+              </h1>{" "}
+              for modern business
+            </main>
+
+            <p className="text-xl text-muted-foreground md:w-10/12 mx-auto lg:mx-0">
+              Leverage AI to automate communication, gain deep insights from interactions, and build stronger customer relationships across all channels.
+            </p>
+
+            <div className="space-y-4 md:space-y-0 md:space-x-4">
+              <Button className="w-full md:w-1/3" asChild>
+                <Link href="/dashboard">Get Started</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="z-10">
+            {heroImage && (
+              <Image
+                src={heroImage.imageUrl}
+                alt={heroImage.description}
+                width={700}
+                height={500}
+                data-ai-hint={heroImage.imageHint}
+                className="rounded-lg shadow-2xl"
+                priority
+              />
+            )}
+          </div>
+
+          <div className="absolute inset-0 -z-10 h-full w-full bg-background [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]" aria-hidden="true"></div>
+
+        </section>
+      </main>
+    </div>
+  );
 }
