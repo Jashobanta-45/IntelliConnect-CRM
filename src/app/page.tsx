@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser } from "@/firebase";
+import { useUser, useAuth, initiateAnonymousSignIn } from "@/firebase";
 import * as React from "react"
 import Autoplay from "embla-carousel-autoplay"
  
@@ -19,9 +19,13 @@ import {
 export default function Home() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const cyberImages = PlaceHolderImages.filter(image => image.imageHint.includes("cyber"));
 
   const handleGetStarted = () => {
+    if (!user) {
+      initiateAnonymousSignIn(auth);
+    }
     router.push('/dashboard');
   };
   

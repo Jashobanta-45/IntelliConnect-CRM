@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function UserNav() {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -58,16 +58,16 @@ export function UserNav() {
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-9 w-9">
               {user?.photoURL ? <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} /> : userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="Admin" data-ai-hint={userAvatar.imageHint} />}
-              <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
+              <AvatarFallback>{(user?.isAnonymous ? 'A' : user?.email?.charAt(0).toUpperCase()) || 'U'}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user?.displayName || 'Admin'}</p>
+              <p className="text-sm font-medium leading-none">{user?.isAnonymous ? 'Anonymous User' : user?.displayName || 'Admin'}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {user?.email || 'admin@intelliconnect.com'}
+                {user?.isAnonymous ? `UID: ${user.uid.substring(0, 6)}...` : user?.email || 'admin@intelliconnect.com'}
               </p>
             </div>
           </DropdownMenuLabel>
