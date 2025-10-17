@@ -22,11 +22,26 @@ export default function Home() {
   const auth = useAuth();
   const cyberImages = PlaceHolderImages.filter(image => image.imageHint.includes("cyber"));
 
+  React.useEffect(() => {
+    if (!isUserLoading && user) {
+      // If user is loaded and exists, they might have just signed in.
+      // Check a flag to see if we should redirect.
+      const shouldRedirect = sessionStorage.getItem('redirectAfterLogin');
+      if (shouldRedirect) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isUserLoading, router]);
+
   const handleGetStarted = () => {
-    if (!user) {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      // Set a flag before initiating sign-in
+      sessionStorage.setItem('redirectAfterLogin', 'true');
       initiateAnonymousSignIn(auth);
     }
-    router.push('/dashboard');
   };
   
   const plugin = React.useRef(
