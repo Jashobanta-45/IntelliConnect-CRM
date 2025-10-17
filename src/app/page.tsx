@@ -1,11 +1,25 @@
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function Home() {
+  const router = useRouter();
   const heroImage = PlaceHolderImages.find(image => image.id === "hero-crm");
+
+  const handleGetStarted = () => {
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+      router.push('/dashboard');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container z-40 bg-background">
@@ -41,8 +55,8 @@ export default function Home() {
             </p>
 
             <div className="space-y-4 md:space-y-0 md:space-x-4">
-              <Button className="w-full md:w-1/3" asChild>
-                <Link href="/dashboard">Get Started</Link>
+              <Button className="w-full md:w-1/3" onClick={handleGetStarted}>
+                Get Started
               </Button>
             </div>
           </div>
