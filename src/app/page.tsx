@@ -22,12 +22,7 @@ export default function Home() {
   const cyberImages = PlaceHolderImages.filter(image => image.imageHint.includes("cyber"));
 
   const handleGetStarted = () => {
-    if (isUserLoading) return;
-    if (user) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
-    }
+    router.push('/dashboard');
   };
   
   const plugin = React.useRef(
@@ -43,10 +38,8 @@ export default function Home() {
             <span className="font-bold font-headline text-xl">IntelliConnect CRM</span>
           </Link>
           <nav>
-            <Button asChild variant="ghost">
-              <Link href="/login">
-                Sign In
-              </Link>
+            <Button onClick={handleGetStarted} disabled={isUserLoading}>
+              {isUserLoading ? 'Loading...' : 'Get Started'}
             </Button>
           </nav>
         </div>
