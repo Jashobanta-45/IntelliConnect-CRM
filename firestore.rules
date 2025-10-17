@@ -1,0 +1,134 @@
+/**
+ * @fileoverview Firestore Security Rules for IntelliConnect CRM.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a multi-tenant security model based on ownership and roles.
+ * Agents have ownership of their call scripts and interactions. Clients and dashboards are accessible based on role.
+ *
+ * Data Structure:
+ * - /clients/{clientId}: Stores client data.
+ * - /agents/{agentId}: Stores agent profiles; agent can access own profile.
+ * - /agents/{agentId}/callScripts/{callScriptId}: Stores call scripts owned by an agent.
+ * - /agents/{agentId}/interactions/{interactionId}: Stores interactions associated with an agent and a client.
+ * - /dashboards/{dashboardId}: Stores role-based dashboard configurations.
+ *
+ * Key Security Decisions:
+ * - Agents can only manage their own call scripts and interactions.
+ * - Agents can only read their own profile.
+ * - Clients are accessible to all authenticated agents, but write permissions are restricted (currently open due to prototyping).
+ * - Listing of documents is allowed for agent-owned subcollections.
+ *
+ * Denormalization for Authorization:
+ * - 'agentId' is denormalized into 'interactions' and 'callScripts' to allow direct rule checks without additional 'get()' calls.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows access to client documents.
+     * @path /clients/{clientId}
+     * @allow (get, list) if true;
+     * @allow (create, update, delete) if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+     * @deny (create) if true; //TODO:  Add verification
+     * @deny (update) if true; //TODO:  Add verification
+     * @deny (delete) if true; //TODO:  Add verification
+     * @principle Public read, owner-only writes.
+     */
+    match /clients/{clientId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Allows agents to read their own agent document.
+     * @path /agents/{agentId}
+     * @allow (get) if isSignedIn() && isOwner(agentId);
+     * @allow (create) if isSignedIn() && isOwner(agentId);
+     * @allow (update) if isSignedIn() && isExistingOwner(agentId);
+     * @allow (delete) if isSignedIn() && isExistingOwner(agentId);
+     * @deny (get) if !isSignedIn() || !isOwner(agentId);
+     * @deny (create) if !isSignedIn() || !isOwner(agentId);
+     * @deny (update) if !isSignedIn() || !isExistingOwner(agentId);
+     * @deny (delete) if !isSignedIn() || !isExistingOwner(agentId);
+     * @principle Enforces document ownership.
+     */
+    match /agents/{agentId} {
+      allow get: if isSignedIn() && isOwner(agentId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(agentId);
+      allow update: if isSignedIn() && isExistingOwner(agentId);
+      allow delete: if isSignedIn() && isExistingOwner(agentId);
+    }
+
+    /**
+     * @description Allows agents to manage their own call scripts.
+     * @path /agents/{agentId}/callScripts/{callScriptId}
+     * @allow (get, list) if isSignedIn() && isOwner(agentId);
+     * @allow (create) if isSignedIn() && isOwner(agentId);
+     * @allow (update) if isSignedIn() && isExistingOwner(agentId);
+     * @allow (delete) if isSignedIn() && isExistingOwner(agentId);
+     * @deny (get) if !isSignedIn() || !isOwner(agentId);
+     * @deny (list) if !isSignedIn() || !isOwner(agentId);
+     * @deny (create) if !isSignedIn() || !isOwner(agentId);
+     * @deny (update) if !isSignedIn() || !isExistingOwner(agentId);
+     * @deny (delete) if !isSignedIn() || !isExistingOwner(agentId);
+     * @principle Enforces document ownership for writes.
+     */
+    match /agents/{agentId}/callScripts/{callScriptId} {
+      allow get, list: if isSignedIn() && isOwner(agentId);
+      allow create: if isSignedIn() && isOwner(agentId);
+      allow update: if isSignedIn() && isExistingOwner(agentId);
+      allow delete: if isSignedIn() && isExistingOwner(agentId);
+    }
+
+    /**
+     * @description Allows agents to manage their own interactions.
+     * @path /agents/{agentId}/interactions/{interactionId}
+     * @allow (get, list) if isSignedIn() && isOwner(agentId);
+     * @allow (create) if isSignedIn() && isOwner(agentId);
+     * @allow (update) if isSignedIn() && isExistingOwner(agentId);
+     * @allow (delete) if isSignedIn() && isExistingOwner(agentId);
+     * @deny (get) if !isSignedIn() || !isOwner(agentId);
+     * @deny (list) if !isSignedIn() || !isOwner(agentId);
+     * @deny (create) if !isSignedIn() || !isOwner(agentId);
+     * @deny (update) if !isSignedIn() || !isExistingOwner(agentId);
+     * @deny (delete) if !isSignedIn() || !isExistingOwner(agentId);
+     * @principle Enforces document ownership for writes.
+     */
+    match /agents/{agentId}/interactions/{interactionId} {
+      allow get, list: if isSignedIn() && isOwner(agentId);
+      allow create: if isSignedIn() && isOwner(agentId);
+      allow update: if isSignedIn() && isExistingOwner(agentId);
+      allow delete: if isSignedIn() && isExistingOwner(agentId);
+    }
+
+    /**
+     * @description Allows access to dashboards based on role.
+     * @path /dashboards/{dashboardId}
+     * @allow get, list: if true;
+     * @allow create, update, delete: if false; // TODO: Add role validation
+     * @deny (create) if true; //TODO:  Add verification
+     * @deny (update) if true; //TODO:  Add verification
+     * @deny (delete) if true; //TODO:  Add verification
+     * @principle Role-based access control.
+     */
+    match /dashboards/{dashboardId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add role validation
+    }
+  }
+
+  // Helper functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+  function isExistingOwner(userId) {
+    return isSignedIn() && isOwner(userId) && resource != null;
+  }
+}

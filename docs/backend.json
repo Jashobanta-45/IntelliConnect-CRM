@@ -1,0 +1,300 @@
+{
+  "entities": {
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
+      "type": "object",
+      "description": "Represents a client or customer in the CRM system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the client.",
+          "format": "uuid"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the client."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the client."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the client.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the client."
+        },
+        "company": {
+          "type": "string",
+          "description": "The company the client works for."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the client was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of when the client was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phone"
+      ]
+    },
+    "Interaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Interaction",
+      "type": "object",
+      "description": "Represents an interaction (e.g., call, SMS, email) with a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the interaction.",
+          "format": "uuid"
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Interaction)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of interaction (e.g., call, SMS, email)."
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "Date and time of the interaction.",
+          "format": "date-time"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Summary of the interaction."
+        },
+        "sentiment": {
+          "type": "string",
+          "description": "Sentiment detected during the interaction (e.g., positive, negative, neutral)."
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Reference to Agent. (Relationship: Agent 1:N Interaction)"
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "type",
+        "dateTime"
+      ]
+    },
+    "CallScript": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CallScript",
+      "type": "object",
+      "description": "Represents a call script used by AI-driven voice calls.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the call script.",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the call script."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the call script (text-to-speech)."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language of the call script."
+        },
+        "emotionProfile": {
+          "type": "string",
+          "description": "Emotion profile to be used during the call."
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Reference to Agent. (Relationship: Agent 1:N CallScript)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "content",
+        "language"
+      ]
+    },
+    "Agent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Agent",
+      "type": "object",
+      "description": "Represents an agent using the CRM system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the agent.",
+          "format": "uuid"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the agent."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the agent."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the agent.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the agent (e.g., admin, agent, manager)."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "role"
+      ]
+    },
+    "Dashboard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Dashboard",
+      "type": "object",
+      "description": "Represents a role-based dashboard in the CRM system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the dashboard.",
+          "format": "uuid"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role associated with this dashboard (e.g., admin, agent, manager)."
+        },
+        "configuration": {
+          "type": "string",
+          "description": "Configuration details for the dashboard (e.g., widgets, layout)."
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "configuration"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Stores client information. Accessible to all authenticated agents, but modifications are restricted based on role and ownership.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/agents/{agentId}",
+        "definition": {
+          "entityName": "Agent",
+          "schema": {
+            "$ref": "#/backend/entities/Agent"
+          },
+          "description": "Stores agent information. Only accessible to the agent themselves and admins.",
+          "params": [
+            {
+              "name": "agentId",
+              "description": "Unique identifier for the agent."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/agents/{agentId}/callScripts/{callScriptId}",
+        "definition": {
+          "entityName": "CallScript",
+          "schema": {
+            "$ref": "#/backend/entities/CallScript"
+          },
+          "description": "Stores call scripts associated with a specific agent. Includes denormalized 'agentId' for authorization independence.",
+          "params": [
+            {
+              "name": "agentId",
+              "description": "Unique identifier for the agent."
+            },
+            {
+              "name": "callScriptId",
+              "description": "Unique identifier for the call script."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/agents/{agentId}/interactions/{interactionId}",
+        "definition": {
+          "entityName": "Interaction",
+          "schema": {
+            "$ref": "#/backend/entities/Interaction"
+          },
+          "description": "Stores interactions associated with a specific agent and client. Includes denormalized 'agentId' for authorization independence.",
+          "params": [
+            {
+              "name": "agentId",
+              "description": "Unique identifier for the agent."
+            },
+            {
+              "name": "interactionId",
+              "description": "Unique identifier for the interaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/dashboards/{dashboardId}",
+        "definition": {
+          "entityName": "Dashboard",
+          "schema": {
+            "$ref": "#/backend/entities/Dashboard"
+          },
+          "description": "Stores role-based dashboards. Accessible based on the 'role' field.",
+          "params": [
+            {
+              "name": "dashboardId",
+              "description": "Unique identifier for the dashboard."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the IntelliConnect CRM application, focusing on AI-driven voice calls and multi-channel engagement. It leverages path-based ownership for agent-specific data (CallScripts, Interactions) and a top-level collection for Clients. Role-based access control is facilitated via a dedicated `agents` collection and denormalized agentId on `interactions` and `callScripts`. This approach enables Authorization Independence, improving security rule simplicity and efficiency. Segregation of data into separate collections based on access patterns ensures each collection has a homogeneous security posture. The structure uses Membership Maps for collaborative entities, although not explicitly needed based on the entities provided. It also avoids the need for custom claims, relying solely on `request.auth.uid` for authorization.\n\n**Authorization Independence:** Agent ownership is enforced using path-based rules. The `agentId` field is denormalized into the `interactions` and `callScripts` collections to avoid `get()` calls in security rules.\n\n**QAPs Support:** The structure supports secure `list` operations by:\n\n*   Using path-based ownership for agent-specific resources, limiting access to authorized agents.\n*   Storing role information directly within the `agents` document. This enables efficient filtering based on roles.\n*   The segregation of data by type into separate collections, each with its own specific security rules."
+  }
+}
