@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // In a future major version of Next.js, this will be required.
+  // For now, it's a good practice to add it to avoid warnings.
+  devServer: {
+    allowedHosts: ['localhost'],
+  },
 };
 
 export default nextConfig;
