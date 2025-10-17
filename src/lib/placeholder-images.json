@@ -11,6 +11,30 @@
       "description": "Avatar for a user named Admin.",
       "imageUrl": "https://picsum.photos/seed/user-avatar-1/40/40",
       "imageHint": "professional person"
+    },
+    {
+      "id": "cyber-1",
+      "description": "Abstract cybernetic background with glowing nodes.",
+      "imageUrl": "https://picsum.photos/seed/cyber1/700/500",
+      "imageHint": "cyber abstract"
+    },
+    {
+      "id": "cyber-2",
+      "description": "Digital landscape with flowing data streams.",
+      "imageUrl": "https://picsum.photos/seed/cyber2/700/500",
+      "imageHint": "cyber landscape"
+    },
+    {
+      "id": "cyber-3",
+      "description": "Close-up of a futuristic circuit board.",
+      "imageUrl": "https://picsum.photos/seed/cyber3/700/500",
+      "imageHint": "cyber circuit"
+    },
+    {
+      "id": "cyber-4",
+      "description": "Holographic interface displaying complex data visualizations.",
+      "imageUrl": "https://picsum.photos/seed/cyber4/700/500",
+      "imageHint": "cyber interface"
     }
   ]
 }

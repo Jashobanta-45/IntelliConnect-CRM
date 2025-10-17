@@ -7,11 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser } from "@/firebase";
+import * as React from "react"
+import Autoplay from "embla-carousel-autoplay"
+ 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
 
 export default function Home() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const heroImage = PlaceHolderImages.find(image => image.id === "hero-crm");
+  const cyberImages = PlaceHolderImages.filter(image => image.imageHint.includes("cyber"));
 
   const handleGetStarted = () => {
     if (isUserLoading) return;
@@ -21,6 +29,10 @@ export default function Home() {
       router.push('/login');
     }
   };
+  
+  const plugin = React.useRef(
+    Autoplay({ delay: 2000, stopOnInteraction: true })
+  )
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -64,17 +76,28 @@ export default function Home() {
           </div>
 
           <div className="z-10">
-            {heroImage && (
-              <Image
-                src={heroImage.imageUrl}
-                alt={heroImage.description}
-                width={700}
-                height={500}
-                data-ai-hint={heroImage.imageHint}
-                className="rounded-lg shadow-2xl"
-                priority
-              />
-            )}
+            <Carousel
+              plugins={[plugin.current]}
+              className="w-full max-w-xl"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
+            >
+              <CarouselContent>
+                {cyberImages.map((image) => (
+                  <CarouselItem key={image.id}>
+                    <Image
+                      src={image.imageUrl}
+                      alt={image.description}
+                      width={700}
+                      height={500}
+                      data-ai-hint={image.imageHint}
+                      className="rounded-lg shadow-2xl"
+                      priority={cyberImages.indexOf(image) === 0}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
 
           <div className="absolute inset-0 -z-10 h-full w-full bg-background [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]" aria-hidden="true"></div>
