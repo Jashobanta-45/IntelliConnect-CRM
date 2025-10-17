@@ -15,9 +15,9 @@ export default function Home() {
             <span className="font-bold font-headline text-xl">IntelliConnect CRM</span>
           </Link>
           <nav>
-            <Button asChild>
-              <Link href="/dashboard">
-                Go to Dashboard
+            <Button asChild variant="ghost">
+              <Link href="/login">
+                Sign In
               </Link>
             </Button>
           </nav>
