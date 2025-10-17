@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,19 +16,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth, useUser } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       toast({
         title: 'Login Failed',
@@ -39,29 +48,30 @@ export default function LoginPage() {
       return;
     }
     
-    // Simulate API call
-    setTimeout(() => {
-        // Dummy validation
-        if (email === 'admin@intelliconnect.com' && password === 'password') {
-            // On successful login, store a token and redirect
-            localStorage.setItem('authToken', 'dummy-auth-token-xyz-123');
-            
-            toast({
-                title: 'Login Successful',
-                description: "Welcome back! Redirecting to your dashboard...",
-            });
-
-            router.push('/dashboard');
-        } else {
-            toast({
-                title: 'Login Failed',
-                description: 'Invalid email or password. Please try again.',
-                variant: 'destructive',
-            });
-            setIsLoading(false);
-        }
-    }, 1000);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: 'Login Successful',
+        description: "Welcome back! Redirecting to your dashboard...",
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: 'Login Failed',
+        description: error.message || 'Invalid email or password. Please try again.',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+    }
   };
+
+  if (isUserLoading || user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -95,7 +105,6 @@ export default function LoginPage() {
                     <Input
                         id="password"
                         type="password"
-                        placeholder="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required

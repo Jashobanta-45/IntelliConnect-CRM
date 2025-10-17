@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useUser } from "@/firebase";
 
 export default function Home() {
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
   const heroImage = PlaceHolderImages.find(image => image.id === "hero-crm");
 
   const handleGetStarted = () => {
-    const authToken = localStorage.getItem('authToken');
-    if (authToken) {
+    if (isUserLoading) return;
+    if (user) {
       router.push('/dashboard');
     } else {
       router.push('/login');
@@ -55,8 +57,8 @@ export default function Home() {
             </p>
 
             <div className="space-y-4 md:space-y-0 md:space-x-4">
-              <Button className="w-full md:w-1/3" onClick={handleGetStarted}>
-                Get Started
+              <Button className="w-full md:w-1/3" onClick={handleGetStarted} disabled={isUserLoading}>
+                {isUserLoading ? 'Loading...' : 'Get Started'}
               </Button>
             </div>
           </div>
