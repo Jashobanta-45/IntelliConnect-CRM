@@ -86,7 +86,7 @@ export default function ContactPage() {
       const docData = {
         ...values,
         submittedAt: serverTimestamp(),
-        ownerId: currentUser.uid, // Always add ownerId
+        uid: currentUser.uid, // Always add uid to match security rules
       };
       
       await addDoc(contactsCollection, docData)

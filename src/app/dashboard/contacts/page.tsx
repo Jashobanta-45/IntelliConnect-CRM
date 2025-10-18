@@ -26,7 +26,7 @@ type Contact = {
   email: string;
   message: string;
   submittedAt: Timestamp;
-  ownerId: string;
+  uid: string;
 };
 
 const ADMIN_EMAILS = ['beherajashobanta892@gmail.com', 'admin@example.com'];
@@ -46,8 +46,8 @@ export default function ContactsPage() {
           // Admin sees all contacts
           return query(contactsCollection, orderBy('submittedAt', 'desc'));
         } else {
-          // Regular user sees only their own contacts
-          return query(contactsCollection, where('ownerId', '==', user.uid), orderBy('submittedAt', 'desc'));
+          // Regular user sees only their own contacts by filtering on 'uid'
+          return query(contactsCollection, where('uid', '==', user.uid), orderBy('submittedAt', 'desc'));
         }
     },
     [firestore, user]
