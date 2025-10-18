@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -17,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Contact = {
@@ -27,17 +26,31 @@ type Contact = {
   email: string;
   message: string;
   submittedAt: Timestamp;
+  ownerId: string | null;
 };
+
+const ADMIN_EMAIL = 'beherajashobanta892@gmail.com';
 
 export default function ContactsPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const contactsQuery = useMemoFirebase(
     () => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'contacts'), orderBy('submittedAt', 'desc'))
+        if (!firestore || !user) return null;
+
+        const contactsCollection = collection(firestore, 'contacts');
+        const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+        
+        if (isAdmin) {
+          // Admin sees all contacts
+          return query(contactsCollection, orderBy('submittedAt', 'desc'));
+        } else {
+          // Regular user sees only their own contacts
+          return query(contactsCollection, where('ownerId', '==', user.uid), orderBy('submittedAt', 'desc'));
+        }
     },
-    [firestore]
+    [firestore, user]
   );
   
   const { data: contacts, isLoading, error } = useCollection<Contact>(contactsQuery);
@@ -76,7 +89,7 @@ export default function ContactsPage() {
       return (
         <TableRow>
           <TableCell colSpan={4} className="text-center text-muted-foreground">
-            No contact submissions yet.
+            No contact submissions found.
           </TableCell>
         </TableRow>
       );
@@ -120,5 +133,3 @@ export default function ContactsPage() {
     </Card>
   );
 }
-
-    

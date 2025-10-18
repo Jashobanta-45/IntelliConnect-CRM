@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -43,6 +43,7 @@ const formSchema = z.object({
 export default function ContactPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -61,6 +62,7 @@ export default function ContactPage() {
       const docData = {
         ...values,
         submittedAt: serverTimestamp(),
+        ownerId: user?.uid || null,
       };
       
       addDoc(contactsCollection, docData)
@@ -168,5 +170,3 @@ export default function ContactPage() {
     </>
   );
 }
-
-    

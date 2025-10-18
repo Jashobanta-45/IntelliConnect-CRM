@@ -2,30 +2,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check for admin user
-    function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email == 'beherajashobanta892@gmail.com' ||
-        request.auth.token.email == 'demo@example.com'
-      );
-    }
     
-    // Allow public creation of contacts, but only admins can manage them
-    match /contacts/{document=**} {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email.lower() == 'beherajashobanta892@gmail.com';
+    }
+
+    // Admins can read/write all contacts.
+    // Regular users can create contacts, and can only read/update/delete their own.
+    match /contacts/{contactId} {
+      allow read, write: if isAdmin();
       allow create: if request.auth != null;
-      allow read, update, delete: if isAdmin();
+      allow get, update, delete: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
     }
 
-    // Allow public creation of reviews, but only admins can manage them
-    match /reviews/{document=**} {
-      allow create: if true; // Anyone can submit a review
+    // Anyone can create a review. Only admins can read/manage them.
+    match /reviews/{reviewId} {
+      allow create: if true;
       allow read, update, delete: if isAdmin();
-    }
-
-    // Default-deny all other collections/documents for safety
-    match /{path=**}/documents/{document} {
-      allow read, write: if false;
     }
   }
 }
