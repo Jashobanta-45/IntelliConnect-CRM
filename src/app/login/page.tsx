@@ -25,9 +25,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
+import { useAuth, useUser, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -60,22 +61,39 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // We are not awaiting this, the onAuthStateChanged listener will handle redirection
-      initiateEmailSignIn(auth, values.email, values.password);
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Signing In...',
         description: 'You will be redirected shortly.',
       });
-      // The useEffect will handle the redirect once the user state changes.
+      // The useEffect will handle redirection.
     } catch (error: any) {
-      console.error('Login Error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description:
-          error.message || 'An unexpected error occurred. Please try again.',
-      });
-      setIsSubmitting(false);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        // If user does not exist, try to create a new account
+        try {
+          await createUserWithEmailAndPassword(auth, values.email, values.password);
+          toast({
+            title: 'Account Created & Signing In...',
+            description: 'Your new account has been created.',
+          });
+          // The useEffect will handle redirection after creation.
+        } catch (signUpError: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Sign-Up Failed',
+            description: signUpError.message || 'Could not create your account.',
+          });
+          setIsSubmitting(false);
+        }
+      } else {
+        console.error('Login Error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.message || 'An unexpected error occurred. Please try again.',
+        });
+        setIsSubmitting(false);
+      }
     }
   }
 
