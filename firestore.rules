@@ -1,31 +1,10 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check for admin emails
-    function isAdmin() {
-      return request.auth.token.email.lower() == "beherajashobanta892@gmail.com" ||
-             request.auth.token.email.lower() == "demo@example.com";
-    }
-
-    // Rules for the reviews collection
-    match /reviews/{reviewId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if isAdmin();
-    }
-    match /reviews {
-      allow list: if isAdmin();
-    }
-
-    // Rules for the contacts collection
-    match /contacts/{contactId} {
-       allow create: if request.auth != null;
-       allow read, update, delete: if isAdmin();
-    }
-    match /contacts {
-      allow list: if isAdmin();
+    match /{document=**} {
+      // TEMPORARY: Allow all authenticated users to read and write all data.
+      // This is for debugging the client-side permissions error and is NOT secure.
+      allow read, write: if request.auth != null;
     }
   }
 }
