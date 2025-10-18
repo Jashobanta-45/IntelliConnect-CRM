@@ -25,8 +25,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser, useAuth } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
 import { Loader2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -44,6 +45,8 @@ const formSchema = z.object({
 export default function ReviewPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
@@ -64,7 +67,17 @@ export default function ReviewPage() {
       return;
     }
     setIsSubmitting(true);
+
     try {
+      // Ensure user is authenticated, anonymously if needed
+      if (!user && auth) {
+        await signInAnonymously(auth);
+      }
+
+      if (!firestore) {
+          throw new Error("Firestore is not available");
+      }
+
       const reviewsCollection = collection(firestore, 'reviews');
       const docData = {
         ...values,
@@ -209,5 +222,3 @@ export default function ReviewPage() {
     </>
   );
 }
-
-    
