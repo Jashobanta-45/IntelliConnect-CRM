@@ -1,10 +1,22 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // TEMPORARY: Allow all authenticated users to read and write all data.
-      // This is for debugging the client-side permissions error and is NOT secure.
+    
+    // Allow all authenticated users to read/write contacts
+    match /contacts/{document=**} {
       allow read, write: if request.auth != null;
+    }
+
+    // Allow public users to add reviews, but only authenticated users can read all
+    match /reviews/{document=**} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // Default deny everything else
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
