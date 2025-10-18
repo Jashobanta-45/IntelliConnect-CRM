@@ -9,16 +9,10 @@ let firebaseApp: FirebaseApp;
 let auth: Auth;
 let firestore: Firestore;
 
-// This function is memoized to ensure it only runs once.
+
 function getFirebaseServices() {
   if (!getApps().length) {
-    try {
-      // Prioritize Firebase App Hosting's auto-configuration
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Fallback to local config for development or if auto-config fails
-      firebaseApp = initializeApp(firebaseConfig);
-    }
+    firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
   }
@@ -42,7 +36,5 @@ export * from './client-provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
 export * from './auth/use-user';
-export * from './non-blocking-updates';
-export * from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';
