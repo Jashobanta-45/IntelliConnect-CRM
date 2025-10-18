@@ -45,6 +45,9 @@ export default function Home() {
             <Button variant="ghost" asChild>
                 <Link href="/contact">Contact Us</Link>
             </Button>
+            <Button variant="ghost" asChild>
+                <Link href="/review">Leave a Review</Link>
+            </Button>
             <Button onClick={handleGetStarted} disabled={isUserLoading}>
               {isUserLoading ? 'Loading...' : (user ? 'Go to Dashboard' : 'Get Started')}
             </Button>

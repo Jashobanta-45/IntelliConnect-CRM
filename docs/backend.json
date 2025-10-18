@@ -228,6 +228,45 @@
         "message",
         "submittedAt"
       ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a customer review or feedback.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the person submitting the review."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the person.",
+          "format": "email"
+        },
+        "rating": {
+          "type": "number",
+          "description": "The rating given by the customer, from 1 to 5.",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "comment": {
+          "type": "string",
+          "description": "The review comment."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp of when the review was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "rating",
+        "comment",
+        "submittedAt"
+      ]
     }
   },
   "auth": {
@@ -338,6 +377,22 @@
             {
               "name": "contactId",
               "description": "Unique identifier for the contact submission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores customer reviews. Should be publicly submittable but only readable by admins.",
+          "params": [
+            {
+              "name": "reviewId",
+              "description": "Unique identifier for the review submission."
             }
           ]
         }

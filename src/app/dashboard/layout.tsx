@@ -26,6 +26,7 @@ import {
   Settings,
   CircleHelp,
   Contact,
+  Star,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,12 @@ const navItems = [
     icon: Contact,
     label: 'Contacts',
     tooltip: 'Contact Submissions',
+  },
+  {
+    href: '/dashboard/reviews',
+    icon: Star,
+    label: 'Reviews',
+    tooltip: 'Customer Reviews',
   },
   {
     href: '/dashboard/voice-calls',
