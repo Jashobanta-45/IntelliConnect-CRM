@@ -1,22 +1,34 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow all authenticated users to read/write contacts
-    match /contacts/{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Helper function to identify admin users by email.
+    function isAdmin() {
+      return request.auth.token.email.lower() == "beherajashobanta892@gmail.com";
     }
 
-    // Allow public users to add reviews, but only authenticated users can read all
-    match /reviews/{document=**} {
+    // Rules for the 'contacts' collection
+    match /contacts/{contactId} {
+      // Admins can perform any action on any contact.
+      allow read, write: if isAdmin();
+      
+      // Any authenticated user can create a new contact.
+      // The new data must have an 'ownerId' field equal to the user's UID.
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      
+      // Authenticated users can read, update, or delete only their own contacts.
+      allow read, update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Rules for the 'reviews' collection
+    match /reviews/{reviewId} {
+      // Anyone (authenticated or not) can create a new review.
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
-    }
-
-    // Default deny everything else
-    match /{document=**} {
-      allow read, write: if false;
+      
+      // Only admins can read, update, or delete reviews.
+      allow read, update, delete: if isAdmin();
     }
   }
 }
