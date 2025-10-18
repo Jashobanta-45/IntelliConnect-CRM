@@ -1,35 +1,31 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Rules for the 'contacts' collection
-    match /contacts/{contactId} {
-      // Allow any authenticated user to create a contact submission.
-      // This includes anonymous users for the public contact form.
-      allow create: if request.auth != null;
-
-      // Allow only the admin to read, update, or delete individual documents.
-      allow get, update, delete: if request.auth.token.email.lower() == "beherajashobanta892@gmail.com";
+    // Helper function to check for admin emails
+    function isAdmin() {
+      return request.auth.token.email.lower() == "beherajashobanta892@gmail.com" ||
+             request.auth.token.email.lower() == "demo@example.com";
     }
 
-    // Allow the admin user to list the entire 'contacts' collection for the dashboard.
-    match /contacts {
-      allow list: if request.auth.token.email.lower() == "beherajashobanta892@gmail.com";
-    }
-
-    // Rules for the 'reviews' collection
+    // Rules for the reviews collection
     match /reviews/{reviewId} {
-      // Allow any authenticated user to create a review.
-      // This includes anonymous users for the public review form.
       allow create: if request.auth != null;
-
-      // Allow only the admin to read, update, or delete individual reviews.
-      allow get, update, delete: if request.auth.token.email.lower() == "beherajashobanta892@gmail.com";
+      allow read, update, delete: if isAdmin();
+    }
+    match /reviews {
+      allow list: if isAdmin();
     }
 
-    // Allow the admin user to list the entire 'reviews' collection for the dashboard.
-    match /reviews {
-      allow list: if request.auth.token.email.lower() == "beherajashobanta892@gmail.com";
+    // Rules for the contacts collection
+    match /contacts/{contactId} {
+       allow create: if request.auth != null;
+       allow read, update, delete: if isAdmin();
+    }
+    match /contacts {
+      allow list: if isAdmin();
     }
   }
 }
