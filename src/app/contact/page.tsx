@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useAuth } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ import { Icons } from '@/components/icons';
 import { Loader2 } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { signInAnonymously } from 'firebase/auth';
 
 
 const formSchema = z.object({
@@ -44,6 +45,7 @@ export default function ContactPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
+  const auth = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,22 +59,34 @@ export default function ContactPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    if (!user) {
+    let currentUser = user;
+
+    try {
+      // Ensure user is authenticated, anonymously if needed
+      if (!currentUser && auth) {
+        const userCredential = await signInAnonymously(auth);
+        currentUser = userCredential.user;
+      }
+      
+      if (!currentUser) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
-            description: 'You must be signed in to submit a contact form.',
+            description: 'Could not authenticate user. Please try again.',
         });
         setIsSubmitting(false);
         return;
-    }
+      }
 
-    try {
+      if (!firestore) {
+          throw new Error("Firestore is not available");
+      }
+
       const contactsCollection = collection(firestore, 'contacts');
       const docData = {
         ...values,
         submittedAt: serverTimestamp(),
-        ownerId: user.uid,
+        ownerId: currentUser.uid, // Always add ownerId
       };
       
       await addDoc(contactsCollection, docData)

@@ -25,9 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser, useAuth } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
 import { Loader2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -38,15 +37,13 @@ import { FirestorePermissionError } from '@/firebase/errors';
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
-  rating: z.number().min(1).max(5),
+  rating: z.number().min(1, { message: 'Please select a rating.' }).max(5),
   comment: z.string().min(10, { message: 'Comment must be at least 10 characters.' }),
 });
 
 export default function ReviewPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const auth = useAuth();
-  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
@@ -69,11 +66,6 @@ export default function ReviewPage() {
     setIsSubmitting(true);
 
     try {
-      // Ensure user is authenticated, anonymously if needed
-      if (!user && auth) {
-        await signInAnonymously(auth);
-      }
-
       if (!firestore) {
           throw new Error("Firestore is not available");
       }
@@ -85,14 +77,16 @@ export default function ReviewPage() {
         submittedAt: serverTimestamp(),
       };
       
-      addDoc(reviewsCollection, docData)
-      .catch(error => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: 'reviews',
-            operation: 'create',
-            requestResourceData: docData,
-        }))
-      });
+      await addDoc(reviewsCollection, docData)
+        .catch(error => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: 'reviews',
+              operation: 'create',
+              requestResourceData: docData,
+          }))
+          // Re-throw to be caught by the outer catch block
+          throw error;
+        });
 
       toast({
         title: 'Review Submitted!',

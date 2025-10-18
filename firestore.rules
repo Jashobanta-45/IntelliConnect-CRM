@@ -1,43 +1,52 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Function to check if the user is an admin based on their email.
+    // Function to check if user is an admin
     function isAdmin() {
-      return request.auth.token.email == "beherajashobanta892@gmail.com" ||
-             request.auth.token.email == "demo@example.com";
+      return request.auth != null && (
+        request.auth.token.email == "beherajashobanta892@gmail.com" ||
+        request.auth.token.email == "admin@example.com"
+      );
     }
 
-    // --- Contacts Collection ---
-    match /contacts/{contactId} {
-      // Admins can perform any action on any document.
+    // ----------------------------
+    // Contacts Collection
+    // ----------------------------
+    match /contacts/{docId} {
+      // Admins can do anything
       allow read, write: if isAdmin();
 
-      // Any authenticated user can create a contact.
-      // The 'ownerId' must match the user's UID.
+      // Any authenticated user can create a contact, but must own it
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-
-      // Regular users can only read their own contacts (one by one).
-      allow get: if request.auth.uid == resource.data.ownerId;
       
-      // Regular users can only update or delete their own contacts.
-      allow update, delete: if request.auth.uid == resource.data.ownerId;
+      // A non-admin user can only read/update/delete their own contacts
+      allow get, update, delete: if request.auth != null && get(/databases/$(database)/documents/contacts/$(docId)).data.ownerId == request.auth.uid;
     }
     
-    // --- Rule for listing contacts ---
-    match /contacts/{contactId} {
-        // Admins can list all contacts. Non-admins can list only their own.
-        allow list: if isAdmin() || (request.auth != null && request.query.filters.size() == 1 && request.query.filters[0].field.stringValue() == 'ownerId' && request.query.filters[0].value.stringValue() == request.auth.uid);
+    // Non-admins can only query for their own contacts
+    match /contacts/{docId} {
+        allow list: if request.auth != null && !isAdmin() && request.query.get("ownerId") == request.auth.uid;
     }
 
 
-    // --- Reviews Collection ---
-    match /reviews/{reviewId} {
-      // Anyone can create a review.
-      allow create: if true;
-      // Only admins can read, update, or delete reviews.
+    // ----------------------------
+    // Reviews Collection
+    // ----------------------------
+    match /reviews/{docId} {
+      // Anyone can submit a review
+      allow create: if true; 
+      
+      // Only admins can read, update or delete reviews
       allow read, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
+    // Default Rule
+    // ----------------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

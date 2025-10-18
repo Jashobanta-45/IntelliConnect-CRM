@@ -29,7 +29,7 @@ type Contact = {
   ownerId: string;
 };
 
-const ADMIN_EMAILS = ['beherajashobanta892@gmail.com', 'demo@example.com'];
+const ADMIN_EMAILS = ['beherajashobanta892@gmail.com', 'admin@example.com'];
 
 export default function ContactsPage() {
   const firestore = useFirestore();
