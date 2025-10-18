@@ -1,5 +1,7 @@
+
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import {
   Card,
@@ -9,7 +11,7 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { Settings, User, LogOut, Loader2, Edit, Save, Upload, Image as ImageIcon } from 'lucide-react';
+import { Settings, User, LogOut, Loader2, Edit, Save, Upload } from 'lucide-react';
 import { useUser, useAuth } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
