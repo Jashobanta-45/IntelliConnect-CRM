@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -97,7 +96,8 @@ export default function LoginPage() {
           </Link>
           <CardTitle className="text-2xl">Welcome Back</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account.
+            Enter your credentials to access your account. <br />
+            Use <strong>demo@example.com</strong> and <strong>password</strong> to sign in.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
