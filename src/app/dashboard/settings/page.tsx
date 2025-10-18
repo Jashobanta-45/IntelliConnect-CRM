@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -35,14 +35,22 @@ export default function SettingsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (user?.displayName) {
+      setDisplayName(user.displayName);
+    }
+  }, [user?.displayName]);
+
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
-      });
-      router.push('/login');
+      if(auth) {
+        await signOut(auth);
+        toast({
+          title: 'Logged Out',
+          description: 'You have been successfully logged out.',
+        });
+        router.push('/login');
+      }
     } catch (error) {
       toast({
         title: 'Logout Failed',
@@ -53,7 +61,7 @@ export default function SettingsPage() {
   };
 
   const handleSaveName = async () => {
-    if (!auth.currentUser) return;
+    if (!auth?.currentUser) return;
     setIsSavingName(true);
     try {
       await updateProfile(auth.currentUser, { displayName });
@@ -75,7 +83,7 @@ export default function SettingsPage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !auth.currentUser) return;
+    if (!file || !auth?.currentUser) return;
 
     setIsUploading(true);
     try {
@@ -173,7 +181,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <p className="text-xl font-semibold">{user.displayName || 'No display name'}</p>
+                      <p className="text-xl font-semibold">{displayName || 'No display name'}</p>
                       <Button variant="ghost" size="icon" onClick={() => setIsEditingName(true)}>
                         <Edit className="h-4 w-4" />
                       </Button>
