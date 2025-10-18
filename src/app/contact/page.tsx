@@ -57,22 +57,34 @@ export default function ContactPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'You must be signed in to submit a contact form.',
+        });
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
       const contactsCollection = collection(firestore, 'contacts');
       const docData = {
         ...values,
         submittedAt: serverTimestamp(),
-        ownerId: user?.uid || null,
+        ownerId: user.uid,
       };
       
-      addDoc(contactsCollection, docData)
-      .catch(error => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: 'contacts',
-            operation: 'create',
-            requestResourceData: docData,
-        }))
-      });
+      await addDoc(contactsCollection, docData)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: 'contacts',
+                operation: 'create',
+                requestResourceData: docData,
+            }))
+            // Re-throw to be caught by the outer catch block
+            throw error;
+        });
 
       toast({
         title: 'Message Sent!',

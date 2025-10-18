@@ -26,10 +26,10 @@ type Contact = {
   email: string;
   message: string;
   submittedAt: Timestamp;
-  ownerId: string | null;
+  ownerId: string;
 };
 
-const ADMIN_EMAIL = 'beherajashobanta892@gmail.com';
+const ADMIN_EMAILS = ['beherajashobanta892@gmail.com', 'demo@example.com'];
 
 export default function ContactsPage() {
   const firestore = useFirestore();
@@ -40,7 +40,7 @@ export default function ContactsPage() {
         if (!firestore || !user) return null;
 
         const contactsCollection = collection(firestore, 'contacts');
-        const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+        const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
         
         if (isAdmin) {
           // Admin sees all contacts
