@@ -25,6 +25,7 @@ import {
   Phone,
   Settings,
   CircleHelp,
+  Contact,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -44,6 +45,12 @@ const navItems = [
     icon: Users,
     label: 'Clients',
     tooltip: 'Client Database',
+  },
+  {
+    href: '/dashboard/contacts',
+    icon: Contact,
+    label: 'Contacts',
+    tooltip: 'Contact Submissions',
   },
   {
     href: '/dashboard/voice-calls',
@@ -172,3 +179,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    

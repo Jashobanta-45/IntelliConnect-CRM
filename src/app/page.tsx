@@ -41,9 +41,12 @@ export default function Home() {
             <Icons.logo className="h-8 w-8 text-primary" />
             <span className="font-bold font-headline text-xl">IntelliConnect CRM</span>
           </Link>
-          <nav>
+          <nav className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+                <Link href="/contact">Contact Us</Link>
+            </Button>
             <Button onClick={handleGetStarted} disabled={isUserLoading}>
-              {isUserLoading ? 'Loading...' : 'Get Started'}
+              {isUserLoading ? 'Loading...' : (user ? 'Go to Dashboard' : 'Get Started')}
             </Button>
           </nav>
         </div>
@@ -104,3 +107,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

@@ -196,6 +196,38 @@
         "role",
         "configuration"
       ]
+    },
+    "Contact": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contact",
+      "type": "object",
+      "description": "Represents a contact form submission.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the person submitting the form."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the person.",
+          "format": "email"
+        },
+        "message": {
+          "type": "string",
+          "description": "The message content."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp of when the form was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "message",
+        "submittedAt"
+      ]
     }
   },
   "auth": {
@@ -293,8 +325,25 @@
             }
           ]
         }
+      },
+      {
+        "path": "/contacts/{contactId}",
+        "definition": {
+          "entityName": "Contact",
+          "schema": {
+            "$ref": "#/backend/entities/Contact"
+          },
+          "description": "Stores contact form submissions from external users. Should be readable by admins/agents.",
+          "params": [
+            {
+              "name": "contactId",
+              "description": "Unique identifier for the contact submission."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The Firestore structure is designed to support the IntelliConnect CRM application, focusing on AI-driven voice calls and multi-channel engagement. It leverages path-based ownership for agent-specific data (CallScripts, Interactions) and a top-level collection for Clients. Role-based access control is facilitated via a dedicated `agents` collection and denormalized agentId on `interactions` and `callScripts`. This approach enables Authorization Independence, improving security rule simplicity and efficiency. Segregation of data into separate collections based on access patterns ensures each collection has a homogeneous security posture. The structure uses Membership Maps for collaborative entities, although not explicitly needed based on the entities provided. It also avoids the need for custom claims, relying solely on `request.auth.uid` for authorization.\n\n**Authorization Independence:** Agent ownership is enforced using path-based rules. The `agentId` field is denormalized into the `interactions` and `callScripts` collections to avoid `get()` calls in security rules.\n\n**QAPs Support:** The structure supports secure `list` operations by:\n\n*   Using path-based ownership for agent-specific resources, limiting access to authorized agents.\n*   Storing role information directly within the `agents` document. This enables efficient filtering based on roles.\n*   The segregation of data by type into separate collections, each with its own specific security rules."
   }
 }
+    
