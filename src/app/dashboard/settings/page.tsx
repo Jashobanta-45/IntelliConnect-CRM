@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card"
-import { Construction, Settings, User, LogOut } from "lucide-react"
+import { Settings, User, LogOut } from "lucide-react"
 import { useUser, useAuth } from "@/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -85,14 +85,6 @@ export default function SettingsPage() {
                         <p>No user information available.</p>
                     )}
                 </div>
-            </div>
-
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
-                <Construction className="h-12 w-12 text-muted-foreground" />
-                <h3 className="text-xl font-semibold">Coming Soon</h3>
-                <p className="text-muted-foreground">
-                    More settings and application preferences are under construction 🚧
-                </p>
             </div>
           </CardContent>
           <CardFooter>
