@@ -97,7 +97,7 @@ export default function DashboardLayout({
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/');
+      router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
