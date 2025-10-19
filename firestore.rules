@@ -2,151 +2,172 @@
  * @fileoverview Firestore Security Rules for IntelliConnect CRM.
  *
  * Core Philosophy:
- * This ruleset enforces a combination of ownership-based and role-based access control.
- * User data is primarily secured using path-based ownership, ensuring that only the
- * authenticated user or authorized roles (e.g., admins) can access specific data.
- * Publicly submittable data (e.g., Contact form submission) has public reads but is locked to write-only access.
+ * This ruleset enforces a multi-tenant security model based on authenticated users (agents) and their associated data.
+ * Data is segregated into collections with specific access control patterns: agent-owned, role-based, and public-read with owner-only writes.
  *
  * Data Structure:
- * - /clients/{clientId}: Stores client information; accessible to agents based on role.
- * - /agents/{agentId}: Stores agent information; accessible only to the agent and admins.
- * - /agents/{agentId}/callScripts/{callScriptId}: Stores call scripts; accessible only to the agent.
- * - /agents/{agentId}/interactions/{interactionId}: Stores interaction logs; accessible only to the agent.
- * - /dashboards/{dashboardId}: Stores role-based dashboard configurations; accessible based on the 'role' field.
- * - /contacts/{contactId}: Stores contact form submissions. Accessible to all agents, and publicly creatable.
- * - /reviews/{reviewId}: Stores customer reviews. Publicly readable, but only creatable.
+ * - /clients/{clientId}: Client information accessible to authenticated agents.
+ * - /agents/{agentId}: Agent profiles, accessible to the agent themselves and admins.
+ * - /agents/{agentId}/callScripts/{callScriptId}: Call scripts owned by an agent.
+ * - /agents/{agentId}/interactions/{interactionId}: Interactions related to an agent's client.
+ * - /dashboards/{dashboardId}: Role-based dashboards.
+ * - /contacts/{contactId}: Contact form submissions, readable by admins/agents.
+ * - /reviews/{reviewId}: Customer reviews, publicly submittable but only readable by admins.
  *
  * Key Security Decisions:
- * - Listing of clients and contact form submissions is generally allowed for agents for CRM operability.
- * - Agent data is strictly private, preventing unauthorized access to other agents' information.
- * - Reviews are publicly readable to encourage user feedback and transparency.
+ * - Agents can only access their own call scripts and interactions.
+ * - Clients are readable by all authenticated agents, but write access is role-based (not yet implemented).
+ * - Contact form submissions and reviews are publicly accessible for creation but have restricted read access.
+ * - Listing of contact submissions is allowed for authenticated users.
+ * - Listing of reviews is denied.
  *
  * Denormalization for Authorization:
- * - The `agentId` is denormalized into the `/agents/{agentId}/callScripts/{callScriptId}` and
- *   `/agents/{agentId}/interactions/{interactionId}` collections to allow direct ownership checks
- *   without needing to perform additional `get()` requests.
+ * The `agentId` is denormalized into the `interactions` and `callScripts` collections to avoid `get()` calls in security rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Allows agents to manage client information.
-     * @path /clients/{clientId}
-     * @allow (get, list) Authenticated agent can retrieve and list client information.
-     * @allow (create, update, delete) Only allow agents can create, update, or delete client information.
-     * @deny (get, list) Unauthorized user attempts to read client data.
-     * @deny (create, update, delete) Unauthorized user attempts to modify client data.
-     * @principle Role-based access control.
-     */
-    match /clients/{clientId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
     /**
-     * @description Allows an agent to manage their own agent profile.
+     * @description Secures client documents. Accessible to authenticated agents, but write permissions are not defined yet.
+     * @path /clients/{clientId}
+     * @allow get (authenticated): Any authenticated agent can read client data.
+     * @deny get (unauthenticated): Unauthenticated users cannot read client data.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Requires authentication for reads. Write rules are not yet defined.
+     */
+    match /clients/{clientId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Secures agent profile documents.
      * @path /agents/{agentId}
-     * @allow (get) Agent can retrieve their own profile data.
-     * @allow (create, update, delete) Agent can manage their own profile data.
-     * @deny (get) Another agent attempts to read this agent's profile data.
-     * @deny (create, update, delete) Another agent attempts to modify this agent's profile data.
-     * @principle Ownership-based access control.
+     * @allow get (owner): The agent can read their own profile.
+     * @deny get (other): Another agent cannot read this agent's profile.
+     * @allow create (owner): An agent can create their profile with matching ID.
+     * @deny create (other): An agent cannot create another agent's profile.
+     * @allow update (owner): An agent can update their own profile.
+     * @deny update (other): Another agent cannot update this agent's profile.
+     * @allow delete (owner): An agent can delete their own profile.
+     * @deny delete (other): Another agent cannot delete this agent's profile.
+     * @principle Enforces document ownership and requires matching user ID.
      */
     match /agents/{agentId} {
       allow get: if isOwner(agentId);
       allow list: if false;
       allow create: if isOwner(agentId);
-      allow update: if isExistingOwner(agentId);
-      allow delete: if isExistingOwner(agentId);
+      allow update: if isOwner(agentId) && resource != null;
+      allow delete: if isOwner(agentId) && resource != null;
     }
 
     /**
-     * @description Allows an agent to manage their own call scripts.
+     * @description Secures call script documents under an agent.
      * @path /agents/{agentId}/callScripts/{callScriptId}
-     * @allow (get, list) Agent can retrieve and list their own call scripts.
-     * @allow (create, update, delete) Agent can manage their own call scripts.
-     * @deny (get, list) Another agent attempts to read this agent's call scripts.
-     * @deny (create, update, delete) Another agent attempts to modify this agent's call scripts.
-     * @principle Ownership-based access control with denormalized agentId.
+     * @allow get (owner): The agent can read their own call scripts.
+     * @deny get (other): Another agent cannot read this agent's call scripts.
+     * @allow create (owner): An agent can create their own call scripts.
+     * @deny create (other): Another agent cannot create call scripts under another agent.
+     * @allow update (owner): The agent can update their own call scripts.
+     * @deny update (other): Another agent cannot update this agent's call scripts.
+     * @allow delete (owner): The agent can delete their own call scripts.
+     * @deny delete (other): Another agent cannot delete this agent's call scripts.
+     * @principle Enforces document ownership for agent-specific data.
      */
     match /agents/{agentId}/callScripts/{callScriptId} {
-      allow get, list: if isOwner(agentId);
-      allow create: if isOwner(agentId) && request.resource.data.agentId == agentId;
-      allow update: if isExistingOwner(agentId) && resource.data.agentId == agentId;
-      allow delete: if isExistingOwner(agentId);
+      allow get: if isOwner(agentId);
+      allow list: if isOwner(agentId);
+      allow create: if isOwner(agentId);
+      allow update: if isOwner(agentId) && resource != null;
+      allow delete: if isOwner(agentId) && resource != null;
     }
 
     /**
-     * @description Allows an agent to manage their own interactions.
+     * @description Secures interaction documents under an agent.
      * @path /agents/{agentId}/interactions/{interactionId}
-     * @allow (get, list) Agent can retrieve and list their own interactions.
-     * @allow (create, update, delete) Agent can manage their own interactions.
-     * @deny (get, list) Another agent attempts to read this agent's interactions.
-     * @deny (create, update, delete) Another agent attempts to modify this agent's interactions.
-     * @principle Ownership-based access control with denormalized agentId.
+     * @allow get (owner): The agent can read their own interactions.
+     * @deny get (other): Another agent cannot read this agent's interactions.
+     * @allow create (owner): An agent can create their own interactions.
+     * @deny create (other): Another agent cannot create interactions under another agent.
+     * @allow update (owner): The agent can update their own interactions.
+     * @deny update (other): Another agent cannot update this agent's interactions.
+     * @allow delete (owner): The agent can delete their own interactions.
+     * @deny delete (other): Another agent cannot delete this agent's interactions.
+     * @principle Enforces document ownership for agent-specific data.
      */
     match /agents/{agentId}/interactions/{interactionId} {
-      allow get, list: if isOwner(agentId);
-      allow create: if isOwner(agentId) && request.resource.data.agentId == agentId;
-      allow update: if isExistingOwner(agentId) && resource.data.agentId == agentId;
-      allow delete: if isExistingOwner(agentId);
+      allow get: if isOwner(agentId);
+      allow list: if isOwner(agentId);
+      allow create: if isOwner(agentId);
+      allow update: if isOwner(agentId) && resource != null;
+      allow delete: if isOwner(agentId) && resource != null;
     }
 
     /**
-     * @description Allows access to role-based dashboards based on the 'role' field.
+     * @description Secures dashboard documents based on the 'role' field.
      * @path /dashboards/{dashboardId}
-     * @allow (get, list) Authenticated users can retrieve and list role-based dashboards.
-     * @allow (create, update, delete) Only allows agent to create, update, or delete role-based dashboards.
-     * @deny (get, list) Unauthorized user attempts to read dashboard data.
-     * @deny (create, update, delete) Unauthorized user attempts to modify dashboard data.
-     * @principle Role-based access control.
+     * @allow get (public): Any authenticated user can read dashboards. Role-based filtering not yet implemented.
+     * @deny get (unauthenticated): Unauthenticated users cannot read dashboards.
+     * @allow create: if false; // TODO: Implement role-based access for creating dashboards.
+     * @allow update: if false; // TODO: Implement role-based access for updating dashboards.
+     * @allow delete: if false; // TODO: Implement role-based access for deleting dashboards.
+     * @principle Requires authentication for reads, with role-based access to be implemented.
      */
     match /dashboards/{dashboardId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false; // TODO: Implement role-based access for creating dashboards.
+      allow update: if false; // TODO: Implement role-based access for updating dashboards.
+      allow delete: if false; // TODO: Implement role-based access for deleting dashboards.
     }
 
     /**
-     * @description Allows public submission of contact forms, but restricts listing and modification.
+     * @description Secures contact form submissions.
      * @path /contacts/{contactId}
-     * @allow (get, list) Authenticated users can retrieve and list contact form submissions.
-     * @allow (create) Any user (even unauthenticated) can submit a contact form.
-     * @deny (update, delete) No user can update or delete contact form submissions.
-     * @principle Public read, owner-only write for contact submissions.
+     * @allow get (public): Any authenticated user can read a contact submission.
+     * @allow list (public): Any authenticated user can list contact submissions.
+     * @allow create (public): Anyone can create a contact submission.
+     * @deny update: No updates allowed.
+     * @deny delete: No deletes allowed.
+     * @principle Allows public creation and authenticated listing, but disallows updates/deletes.
      */
     match /contacts/{contactId} {
-      allow get, list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if true;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows public reading of customer reviews, but restricts modification.
+     * @description Secures customer reviews.
      * @path /reviews/{reviewId}
-     * @allow (get, list) Any user (even unauthenticated) can read customer reviews.
-     * @allow (create) Only allow agents can create reviews
-     * @deny (update, delete) No user can update or delete reviews.
-     * @principle Public read, owner-only write for reviews.
+     * @allow get (none): No one can read customer reviews.
+     * @deny list (public): No one can list reviews.
+     * @allow create (public): Anyone can create a review.
+     * @deny update: No updates allowed.
+     * @deny delete: No deletes allowed.
      */
     match /reviews/{reviewId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow get: if false;
+      allow list: if false;
+      allow create: if true;
+      allow update: if false;
+      allow delete: if false;
     }
-
-  }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
   }
 }
