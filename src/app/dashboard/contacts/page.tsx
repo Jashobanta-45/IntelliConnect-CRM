@@ -43,10 +43,10 @@ export default function ContactsPage() {
         const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
         
         if (isAdmin) {
-          // Admin sees all contacts
+          // Admin sees all contacts, ordered by submission date
           return query(contactsCollection, orderBy('submittedAt', 'desc'));
         } else {
-          // Regular user sees only their own contacts by filtering on 'uid'
+          // Regular user sees only their own contacts, ordered by submission date
           return query(contactsCollection, where('uid', '==', user.uid), orderBy('submittedAt', 'desc'));
         }
     },

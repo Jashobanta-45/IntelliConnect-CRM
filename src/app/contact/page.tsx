@@ -62,7 +62,6 @@ export default function ContactPage() {
     let currentUser = user;
 
     try {
-      // Ensure user is authenticated, anonymously if needed
       if (!currentUser && auth) {
         const userCredential = await signInAnonymously(auth);
         currentUser = userCredential.user;
@@ -86,7 +85,7 @@ export default function ContactPage() {
       const docData = {
         ...values,
         submittedAt: serverTimestamp(),
-        uid: currentUser.uid, // Always add uid to match security rules
+        uid: currentUser.uid, 
       };
       
       await addDoc(contactsCollection, docData)
@@ -96,7 +95,6 @@ export default function ContactPage() {
                 operation: 'create',
                 requestResourceData: docData,
             }))
-            // Re-throw to be caught by the outer catch block
             throw error;
         });
 
